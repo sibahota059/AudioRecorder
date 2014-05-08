@@ -28,7 +28,8 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    
+     isplaying=NO;
+    isrecording=NO;
     playButton.enabled = NO;
     stopButton.enabled = NO;
     UploadButton.enabled=NO;
@@ -51,39 +52,44 @@
     
     if ([myUrlString isEqualToString:@"ENTER YOUR URL"]) {
         
-        UIAlertView *alertnow=[[UIAlertView alloc]initWithTitle:@"oops!!!" message:@"Please Enter your Url" delegate:nil cancelButtonTitle:@"Ok" otherButtonTitles:@"", nil];
+        UIAlertView *alertnow=[[UIAlertView alloc]initWithTitle:@"oops!!!" message:@"Please Enter your Url" delegate:nil cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
         [alertnow show];
         
         stopButton.enabled = YES;
         playButton.enabled = YES;
         recordButton.enabled = YES;
     }
-    
-    NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
-    [request setURL:myURL];
-    [request setHTTPMethod:@"POST"];
-    
-    NSMutableData *body = [NSMutableData data];
-    
-    [body appendData:[NSData dataWithData:webData]];
-    
-    [request setHTTPBody:body];
-    
-    [NSURLConnection sendAsynchronousRequest:request queue:[NSOperationQueue mainQueue]
-                           completionHandler:^(NSURLResponse *response, NSData *data, NSError *error)
+    else
     {
-        if([(NSHTTPURLResponse *)response statusCode]==200)
-        {
-            
-            id jsonObject = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingAllowFragments error:nil];
-            NSLog(@"Upload status=%@",jsonObject);
-            
-            stopButton.enabled = YES;
-            playButton.enabled = YES;
-            recordButton.enabled = YES;
-        }
-    }];
-}
+        NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
+        [request setURL:myURL];
+        [request setHTTPMethod:@"POST"];
+        
+        NSMutableData *body = [NSMutableData data];
+        
+        [body appendData:[NSData dataWithData:webData]];
+        
+        [request setHTTPBody:body];
+        
+        [NSURLConnection sendAsynchronousRequest:request queue:[NSOperationQueue mainQueue]
+                               completionHandler:^(NSURLResponse *response, NSData *data, NSError *error)
+         {
+             if([(NSHTTPURLResponse *)response statusCode]==200)
+             {
+                 
+                 id jsonObject = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingAllowFragments error:nil];
+                 NSLog(@"Upload status=%@",jsonObject);
+                 
+                 stopButton.enabled = YES;
+                 playButton.enabled = YES;
+                 recordButton.enabled = YES;
+             }
+         }];
+
+        
+    }
+    
+   }
 
 
 
@@ -97,6 +103,8 @@
 
 - (IBAction)RecordNow:(id)sender {
     
+    isrecording=YES;
+    isplaying=NO;
     
     playButton.enabled = NO;
     UploadButton.enabled=NO;
@@ -134,17 +142,34 @@
 
 - (IBAction)stopRecording:(id)sender {
     
-    stopButton.enabled = NO;
-    playButton.enabled = YES;
-    UploadButton.enabled=YES;
-      [self.recorder stop];
+    if (isrecording) {
+      
+         [self.recorder stop];
+        isrecording=NO;
+        stopButton.enabled = NO;
+        playButton.enabled = YES;
+        UploadButton.enabled=YES;
+    }
+   else if(isplaying)
+   {
+       [self.player stop];
+       isplaying=NO;
+       stopButton.enabled = NO;
+       playButton.enabled = YES;
+       UploadButton.enabled=YES;
+       
+   }
+    
 }
 
 - (IBAction)PlayRecordedAudio:(id)sender {
     
+    isrecording=NO;
+    isplaying=YES;
     stopButton.enabled = YES;
     recordButton.enabled = NO;
-   
+    playButton.enabled=NO;
+    UploadButton.enabled=NO;
     // grab a URL to an audio asset
     NSURL *documentsURL = [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
     documentsURL = [documentsURL URLByAppendingPathComponent:@"audiofile.mp4"];
@@ -166,6 +191,10 @@
 
 - (void)audioRecorderDidFinishRecording:(AVAudioRecorder *)recorder successfully:(BOOL)flag {
     
+    isrecording=NO;
+    stopButton.enabled = NO;
+    playButton.enabled = YES;
+    UploadButton.enabled=YES;
     // we're done recording
    }
 
@@ -177,7 +206,10 @@
 - (void)audioPlayerDidFinishPlaying:(AVAudioPlayer *)player successfully:(BOOL)flag {
     
     // done playing
-    
+     isplaying=NO;
+    stopButton.enabled = NO;
+    playButton.enabled = YES;
+    UploadButton.enabled=YES;
 }
 
 - (void)audioPlayerDecodeErrorDidOccur:(AVAudioPlayer *)player error:(NSError *)error {

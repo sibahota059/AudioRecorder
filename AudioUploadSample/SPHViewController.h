@@ -15,6 +15,8 @@
 @interface SPHViewController : UIViewController<AVAudioRecorderDelegate, AVAudioPlayerDelegate>
 {
     
+    BOOL isrecording;
+    BOOL isplaying;
     UIButton *playButton;
     UIButton *recordButton;
     UIButton *stopButton;
